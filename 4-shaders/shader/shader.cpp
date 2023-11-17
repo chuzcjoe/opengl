@@ -62,6 +62,10 @@ void Shader::updateColor(const char* name, std::vector<float>& color) {
     glUniform3f(glGetUniformLocation(m_id, name), color[0], color[1], color[2]);
 }
 
+void Shader::updatePos(const char* name, std::vector<float>& offset) {
+    glUniform3f(glGetUniformLocation(m_id, name), offset[0], offset[1], offset[2]);
+}
+
 void Shader::checkCompileErrors(unsigned int shader, std::string type) {
     int success;
     char infoLog[1024];

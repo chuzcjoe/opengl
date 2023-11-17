@@ -20,6 +20,8 @@ public:
 
     void updateColor(const char* name,  std::vector<float>& color);
 
+    void updatePos(const char* name, std::vector<float>& offset);
+
     // check compile error
     void checkCompileErrors(unsigned int shader, std::string type);
 };

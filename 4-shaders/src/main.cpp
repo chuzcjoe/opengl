@@ -53,7 +53,7 @@ int main() {
         0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // bottom right
         -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // bottom left
         0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // top 
-    };  
+    };
 
     // vertex buffer objects (VBO) that can store a large number of vertices in the GPU's memory
     // VAO is an object that encapsulates a set of vertex array states, including the configuration of vertex attributes and their associated data. 
@@ -95,9 +95,11 @@ int main() {
         float red = 0.5 + 0.5 * sin(timeValue);
         float green = 0.5 + 0.5 * cos(timeValue);
         float blue = 0.5 + 0.5 * sin(timeValue + 2.0);
+        std::vector<float> offsets{0.5, 0, 0};
 
         std::vector<float> colors{red, green, blue};
         shader.updateColor("customColor", colors);
+        shader.updateColor("offset", offsets);
         
         // draw
         glBindVertexArray(VAO);
