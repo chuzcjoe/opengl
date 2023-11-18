@@ -8,12 +8,21 @@
 #include <GLFW/glfw3.h>
 
 GLenum line_type = GL_LINE;
+float opacity = 0.0f;
 
-void handleInput(GLFWwindow* window) {
+void handleInput(GLFWwindow* window, Shader& shader) {
     if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS) {
         std::cout << "F1 pressed\n";
         line_type = line_type == GL_LINE ? GL_FILL : GL_LINE;
         glPolygonMode(GL_FRONT_AND_BACK, line_type);
+    } else if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+        std::cout << "UP pressed\n";
+        opacity = std::min(opacity + 0.01f, 1.0f);
+        glUniform1f(glGetUniformLocation(shader.getID(), "alpha"), opacity);
+    } else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        std::cout << "DOWN pressed\n";
+        opacity = std::max(opacity - 0.01f, 0.0f);
+        glUniform1f(glGetUniformLocation(shader.getID(), "alpha"), opacity);
     }
 }
 
@@ -65,7 +74,7 @@ int main() {
 
     // vertex buffer objects (VBO) that can store a large number of vertices in the GPU's memory
     // VAO is an object that encapsulates a set of vertex array states, including the configuration of vertex attributes and their associated data. 
-    unsigned int VAO;
+    unsigned int VAO;// handle user input
     unsigned int VBO;
     unsigned int EBO;
     unsigned int texture1;
@@ -83,10 +92,10 @@ int main() {
     // -------------texture 1-------------
     glActiveTexture(GL_TEXTURE0); // activated by default
     glBindTexture(GL_TEXTURE_2D, texture1);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     // load texture
     int width, height, channels;
@@ -106,8 +115,8 @@ int main() {
     glBindTexture(GL_TEXTURE_2D, texture2);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     // load texture
     stbi_set_flip_vertically_on_load(true);  
@@ -148,7 +157,7 @@ int main() {
 
     while(!glfwWindowShouldClose(window)) {
         // handle user input
-        handleInput(window);
+        handleInput(window, shader);
 
         // render
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
