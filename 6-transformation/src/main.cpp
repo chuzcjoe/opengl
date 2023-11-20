@@ -40,7 +40,12 @@ int main() {
 #endif
 
     // Create a window object
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Triangle", NULL, NULL);
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+    // Set the window size to be the same as the screen resolution
+    int screenWidth = mode->width;
+    int screenHeight = mode->height;
+    GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "Triangle", NULL, NULL);
     if (window == nullptr) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
