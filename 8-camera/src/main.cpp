@@ -1,6 +1,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include "include/glad.h"
+#include "camera.h"
 #include "shader.h"
 #include "glm.hpp"
 #include "gtc/matrix_transform.hpp"
@@ -11,7 +12,13 @@
 #include <GLFW/glfw3.h>
 
 GLenum line_type = GL_LINE;
-float opacity = 0.0f;
+static float opacity = 0.0f;
+static bool firstMouse = true;
+float lastX = 400, lastY = 300;
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+
+Camera camera(0.0f, 0.0f, 3.0f, 0.0f, 1.0f, 0.0f, -90.0f, 0.0f);
 
 void handleInput(GLFWwindow* window, Shader& shader) {
     if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS) {
@@ -22,11 +29,43 @@ void handleInput(GLFWwindow* window, Shader& shader) {
         std::cout << "UP pressed\n";
         opacity = std::min(opacity + 0.01f, 1.0f);
         glUniform1f(glGetUniformLocation(shader.getID(), "alpha"), opacity);
+    } else if (glfwGetKey(window, GLFW_KEY_F2) == GLFW_PRESS) {
+        glfwSetWindowShouldClose(window, true);
     } else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
         std::cout << "DOWN pressed\n";
         opacity = std::max(opacity - 0.01f, 0.0f);
         glUniform1f(glGetUniformLocation(shader.getID(), "alpha"), opacity);
+    } else if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        camera.ProcessKeyPressed(FORWARD, deltaTime);
+    } else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        camera.ProcessKeyPressed(BACKWARD, deltaTime);
+    } else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        camera.ProcessKeyPressed(LEFT, deltaTime);
+    } else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        camera.ProcessKeyPressed(RIGHT, deltaTime);
+    }      
+}
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    if (firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
     }
+  
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; 
+    lastX = xpos;
+    lastY = ypos;
+
+    camera.ProcessMouseMovement(xoffset, yoffset, true);
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    camera.ProcessMouseScroll(yoffset);
 }
 
 int main() {
@@ -40,8 +79,14 @@ int main() {
 #endif
 
     // Create a window object
-    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+    int monitorCount;
+    GLFWmonitor** monitor = glfwGetMonitors(&monitorCount);
+    if (monitorCount < 2) {
+        std::cerr << "There is no second monitor\n";
+        return -1;
+    }
+    GLFWmonitor* secondMonitor = monitor[0];
+    const GLFWvidmode* mode = glfwGetVideoMode(secondMonitor);
     // Set the window size to be the same as the screen resolution
     int screenWidth = mode->width;
     int screenHeight = mode->height;
@@ -52,6 +97,8 @@ int main() {
         return -1;
     }
     glfwMakeContextCurrent(window);
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // Initialize GLAD before we call any OpenGL functions
     // glad: load all OpenGL function pointers
@@ -213,8 +260,16 @@ int main() {
     };
 
     while(!glfwWindowShouldClose(window)) {
+        float currentFrame = (float)(glfwGetTime());
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
         // handle user input
         handleInput(window, shader);
+
+        glfwSetCursorPosCallback(window, mouse_callback);
+
+        glfwSetScrollCallback(window, scroll_callback); 
 
         // render
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -224,16 +279,14 @@ int main() {
         shader.activate();
 
         // transform matrix
-        glm::mat4 view = glm::mat4(1.0f);
-        glm::mat4 projection = glm::mat4(1.0f);
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -5.0f));
-        projection = glm::perspective(glm::radians(45.0f), ((float)(screenWidth)) /((float)(screenHeight)), 0.1f, 100.0f);
+        glm::mat4 view = camera.GetViewMatrix();
+        glm::mat4 projection = glm::perspective(glm::radians(camera.m_zoom), ((float)(screenWidth)) /((float)(screenHeight)), 0.1f, 100.0f);
         glUniformMatrix4fv(glGetUniformLocation(shader.getID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(shader.getID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
         
         // draw
         glBindVertexArray(VAO);
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 10; i++) {
             glm::mat4 model = glm::mat4(1.0f);
             if (i < 10)
                 model = glm::translate(model, cubePositions[i]);
