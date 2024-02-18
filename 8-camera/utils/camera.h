@@ -1,7 +1,7 @@
 #ifndef _CAMERA_H_
 #define _CAMERA_H_
 
-#include "include/glad.h"
+#include "include/glad/glad.h"
 #include "glm.hpp"
 #include "gtc/matrix_transform.hpp"
 #include <iostream>

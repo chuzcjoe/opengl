@@ -1,6 +1,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-#include "include/glad.h"
+#include "include/glad/glad.h"
 #include "camera.h"
 #include "shader.h"
 #include "glm.hpp"
